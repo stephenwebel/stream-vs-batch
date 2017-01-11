@@ -21,5 +21,6 @@ public class Main {
         Collection<Song> songs = songFileReader.readSongsFromFile();
         stopWatch.stop();
         log.info("Found {} songs", songs.size());
+        log.info(stopWatch.prettyPrint());
     }
 }
