@@ -18,8 +18,6 @@ import static com.webel.common.SongArgumentParser.pathToSongData;
  * Created by swebel on 1/11/2017.
  */
 @Slf4j
-@SpringBootApplication
-@Configuration
 public class StreamTestRunner {
     private static final String pathToSongJson = "src/main/resources/pureStreamWrite.json";
     private static final String pathToVolatileJson = "src/main/resources/volatileWrite.json";
