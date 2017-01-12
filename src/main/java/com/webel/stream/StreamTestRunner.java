@@ -19,9 +19,10 @@ import java.util.stream.Collectors;
 @SpringBootApplication
 @Configuration
 public class StreamTestRunner {
-    private static final String pathToSongData = "src/main/resources/songdata.csv";
+    //    private static final String pathToSongData = "src/main/resources/songdata.csv";
+//    private static final String pathToSongData = "src/main/resources/song.txt";
+    private static final String pathToSongData = "src/main/resources/big_songs.txt";
     private static final String pathToSongJson = "src/main/resources/pureStreamWrite.json";
-    private static final String pathToBatchJson = "src/main/resources/batchWrite.json";
     private static final String pathToVolatileJson = "src/main/resources/volatileWrite.json";
     private static final StopWatch stopWatch = new StopWatch();
     private final NamedParameterJdbcTemplate namedTemplate;
@@ -32,28 +33,26 @@ public class StreamTestRunner {
     }
 
     void runStreamTest() {
-        log.info("Starting Stream Processing");
 //        runStreamReadTest();
 //        runWriteTest();
 //        runVolatileTest();
 //        runDatabaseWrite();
-//        runDatabaseBatchWrite();
-//        runBatchTest();
+        runDatabaseBatchWrite();
     }
 
-    private void runStreamReadTest() {
+    void runStreamReadTest() {
         log.info("Starting Stream Read Test");
         stopWatch.start("Stream Read");
         List<Song> songs = SongFileStreamer.stream(pathToSongData).collect(Collectors.toList());
-        log.info("read {} songs from {}",songs.size(),pathToSongData);
-        log.info("first song: {}",songs.get(0));
-        log.info("last song: {}",songs.get(songs.size()-1));
+        log.info("read {} songs from {}", songs.size(), pathToSongData);
+        log.info("first song: {}", songs.get(0));
+        log.info("last song: {}", songs.get(songs.size() - 1));
         stopWatch.stop();
-        log.info("{}",stopWatch.prettyPrint());
+        log.info("{}", stopWatch.prettyPrint());
     }
 
-    private void runWriteTest() {
-        log.info("Starting Stream Processing");
+    void runWriteTest() {
+        log.info("Starting Stream Write Test");
         stopWatch.start("Stream Read -> Stream Write");
         Collection<Song> songs = Lists.newArrayList();
         try (StreamWriter streamWriter = new StreamWriter(pathToSongJson, namedTemplate)) {
@@ -68,68 +67,53 @@ public class StreamTestRunner {
         log.info(stopWatch.prettyPrint());
     }
 
-    public void runVolatileTest() {
+    void runVolatileTest() {
         log.info("Starting Stream With Volatile Write");
         stopWatch.start("Streaming Volatile Write");
-        Collection<Song> songs = Lists.newArrayList();
+        long numSongs = 0L;
         try (StreamWriter streamWriter = new StreamWriter(pathToVolatileJson, namedTemplate)) {
-            songs = SongFileStreamer.stream(pathToSongData)
+            numSongs = SongFileStreamer.stream(pathToSongData)
                     .map(streamWriter::volatileWrite)
                     .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
+                    .count();
         } catch (IOException e) {
             log.error("", e);
         }
         stopWatch.stop();
-        log.info("Found {} songs", songs.size());
+        log.info("Found {} songs", numSongs);
         log.info(stopWatch.prettyPrint());
     }
 
-    private void runDatabaseBatchWrite() {
+    void runDatabaseBatchWrite() {
         log.info("Starting Stream Jdbc Batch Processing");
-        stopWatch.start("Stream Write");
-        Collection<Song> songs = Lists.newArrayList();
+        stopWatch.start("Stream Read, Batching Write");
+        long numSongs = 0L;
         try (StreamWriter streamWriter = new StreamWriter(pathToSongJson, namedTemplate)) {
-            songs = SongFileStreamer.stream(pathToSongData)
+            log.info("Stream writer is initialized");
+            numSongs = SongFileStreamer.stream(pathToSongData)
                     .peek(streamWriter::batchInsertSong)
-                    .collect(Collectors.toList());
+                    .count();
         } catch (IOException e) {
             log.error("", e);
         }
         stopWatch.stop();
-        log.info("Found {} songs", songs.size());
+        log.info("Found {} songs", numSongs);
         log.info(stopWatch.prettyPrint());
     }
 
-    public void runDatabaseWrite() {
+    void runDatabaseWrite() {
         log.info("Starting Stream Jdbc Processing");
         stopWatch.start("Stream Write");
-        Collection<Song> songs = Lists.newArrayList();
+        long numSongs = 0L;
         try (StreamWriter streamWriter = new StreamWriter(pathToSongJson, namedTemplate)) {
-            songs = SongFileStreamer.stream(pathToSongData)
+            numSongs = SongFileStreamer.stream(pathToSongData)
                     .peek(streamWriter::insertSong)
-                    .collect(Collectors.toList());
+                    .count();
         } catch (IOException e) {
             log.error("", e);
         }
         stopWatch.stop();
-        log.info("Found {} songs", songs.size());
-        log.info(stopWatch.prettyPrint());
-    }
-
-    public void runBatchTest() {
-        log.info("Starting Stream With Batch Write");
-        stopWatch.start("Stream Batch Write");
-        Collection<Song> songs = Lists.newArrayList();
-        try (StreamWriter streamWriter = new StreamWriter(pathToBatchJson, namedTemplate)) {
-            songs = SongFileStreamer.stream(pathToSongData)
-                    .peek(streamWriter::batchWrite)
-                    .collect(Collectors.toList());
-        } catch (IOException e) {
-            log.error("", e);
-        }
-        stopWatch.stop();
-        log.info("Found {} songs", songs.size());
+        log.info("Found {} songs", numSongs);
         log.info(stopWatch.prettyPrint());
     }
 }

@@ -17,24 +17,19 @@ import java.util.Map;
  */
 @Slf4j
 class StreamWriter implements AutoCloseable {
-
-    private static int SIZE = 0;
-    private static final int BATCH_SIZE = 10;
+    private static final int BATCH_SIZE = 1000;
     private static final String INSERT_SONG = "insert " +
             "into music_library.songz " +
             "(artist, title, link, lyrics) " +
             "values " +
             "(:artist, :title, :link, :lyrics)";
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private List<Map<String, ?>> parameters = Lists.newArrayList();
     private final FileWriter writer;
     private final NamedParameterJdbcTemplate namedTemplate;
     private final String pathToSongJson;
-    private ObjectMapper objectMapper = new ObjectMapper();
-    private List<Map<String, ?>> parameters = Lists.newArrayList();
 
-
-    private StringBuilder batch = new StringBuilder();
-
-    public StreamWriter(String pathToSongJson, NamedParameterJdbcTemplate namedTemplate) throws IOException {
+    StreamWriter(String pathToSongJson, NamedParameterJdbcTemplate namedTemplate) throws IOException {
         this.pathToSongJson = pathToSongJson;
         writer = new FileWriter(pathToSongJson, true);
         this.namedTemplate = namedTemplate;
@@ -75,25 +70,12 @@ class StreamWriter implements AutoCloseable {
         parameterMap.put("link", song.getLink());
         parameterMap.put("lyrics", song.getLyrics());
         parameters.add(parameterMap);
-        if (parameterMap.size() >= BATCH_SIZE) {
+        if (parameters.size() >= BATCH_SIZE) {
             Map[] paramArr = new Map[parameters.size()];
             namedTemplate.batchUpdate(INSERT_SONG, parameters.toArray(paramArr));
             parameters = Lists.newArrayListWithCapacity(BATCH_SIZE);
         }
 
-    }
-
-    void batchWrite(Song song) {
-        try {
-            ++SIZE;
-            //this is dumb
-            batch.append(objectMapper.writeValueAsString(song)).append("\n");
-            if (SIZE % BATCH_SIZE == 0) {
-                writer.write(batch.toString());
-            }
-        } catch (IOException e) {
-            log.error("", e);
-        }
     }
 
     public void close() throws IOException {
