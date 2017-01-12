@@ -9,7 +9,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -17,7 +16,7 @@ import java.util.Map;
  * Created by stephenwebel1 on 1/11/17.
  */
 @Slf4j
-class StreamFileWriter implements AutoCloseable {
+class StreamWriter implements AutoCloseable {
 
     private static int SIZE = 0;
     private static final int BATCH_SIZE = 10;
@@ -26,22 +25,40 @@ class StreamFileWriter implements AutoCloseable {
             "(artist, title, link, lyrics) " +
             "values " +
             "(:artist, :title, :link, :lyrics)";
-    private final FileWriter batchWriter;
     private final FileWriter writer;
-    private final FileWriter volatileWriter;
     private final NamedParameterJdbcTemplate namedTemplate;
+    private final String pathToSongJson;
     private ObjectMapper objectMapper = new ObjectMapper();
+    private List<Map<String, ?>> parameters = Lists.newArrayList();
+
 
     private StringBuilder batch = new StringBuilder();
 
-    public StreamFileWriter(String pathToSongJson, NamedParameterJdbcTemplate namedTemplate) throws IOException {
+    public StreamWriter(String pathToSongJson, NamedParameterJdbcTemplate namedTemplate) throws IOException {
+        this.pathToSongJson = pathToSongJson;
         writer = new FileWriter(pathToSongJson, true);
-        batchWriter = new FileWriter(pathToSongJson, true);
-        volatileWriter = new FileWriter(pathToSongJson, true);
         this.namedTemplate = namedTemplate;
     }
 
-    public void insertSong(Song song) {
+    void writeSong(Song song) {
+        try (FileWriter singleSongWriter = new FileWriter(pathToSongJson, true)) {
+            singleSongWriter.write(objectMapper.writeValueAsString(song) + "\n");
+        } catch (IOException e) {
+            log.error("", e);
+        }
+    }
+
+    Song volatileWrite(Song song) {
+        try {
+            writer.write(objectMapper.writeValueAsString(song) + "\n");
+            return song;
+        } catch (IOException e) {
+            log.warn("could not write song: {}", song);
+        }
+        return null;
+    }
+
+    void insertSong(Song song) {
         Map<String, Object> parameters = Maps.newHashMap();
         parameters.put("artist", song.getArtistName());
         parameters.put("title", song.getTitle());
@@ -50,23 +67,20 @@ class StreamFileWriter implements AutoCloseable {
         namedTemplate.update(INSERT_SONG, parameters);
     }
 
-    private List<Map<String, Object>> parameters = Lists.newArrayList();
 
-    public void batchInsertSong(Song song) {
-
-    }
-
-    /**
-     * Writes a song to the file.
-     *
-     * @param song
-     */
-    void writeSong(Song song) {
-        try {
-            writer.write(objectMapper.writeValueAsString(song) + "\n");
-        } catch (IOException e) {
-            log.warn("could not write song: {}", song);
+    void batchInsertSong(Song song) {
+        Map<String, Object> parameterMap = Maps.newHashMap();
+        parameterMap.put("artist", song.getArtistName());
+        parameterMap.put("title", song.getTitle());
+        parameterMap.put("link", song.getLink());
+        parameterMap.put("lyrics", song.getLyrics());
+        parameters.add(parameterMap);
+        if (parameterMap.size() >= BATCH_SIZE) {
+            Map[] paramArr = new Map[parameters.size()];
+            namedTemplate.batchUpdate(INSERT_SONG, parameters.toArray(paramArr));
+            parameters = Lists.newArrayListWithCapacity(BATCH_SIZE);
         }
+
     }
 
     void batchWrite(Song song) {
@@ -75,26 +89,18 @@ class StreamFileWriter implements AutoCloseable {
             //this is dumb
             batch.append(objectMapper.writeValueAsString(song)).append("\n");
             if (SIZE % BATCH_SIZE == 0) {
-                batchWriter.write(batch.toString());
+                writer.write(batch.toString());
             }
         } catch (IOException e) {
             log.error("", e);
         }
     }
 
-    Song volatileWrite(Song song) {
-        try {
-            volatileWriter.write(objectMapper.writeValueAsString(song) + "\n");
-            return song;
-        } catch (IOException e) {
-            log.warn("could not write song: {}", song);
-        }
-        return null;
-    }
-
     public void close() throws IOException {
+        if (!parameters.isEmpty()) {
+            Map[] paramArr = new Map[parameters.size()];
+            namedTemplate.batchUpdate(INSERT_SONG, parameters.toArray(paramArr));
+        }
         writer.close();
-        batchWriter.close();
-        volatileWriter.close();
     }
 }

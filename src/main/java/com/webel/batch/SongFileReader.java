@@ -25,8 +25,8 @@ public class SongFileReader {
         this.pathToSongData = pathToSongData;
     }
 
-    public Collection<Song> readSongsFromFile() {
-        Collection<Song> songs = Lists.newArrayList();
+    public List<Song> readSongsFromFile() {
+        List<Song> songs = Lists.newArrayList();
         try (BufferedReader songFileReader = new BufferedReader(new FileReader(pathToSongData))) {
             String currentLine = songFileReader.readLine();
             log.info("Headers for song data: {}", currentLine);
