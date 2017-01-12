@@ -9,9 +9,9 @@ import java.util.List;
  */
 public class SongArgumentParser {
 
-    public static final String pathToSongData = "src/main/resources/songdata.csv";
+//    public static final String pathToSongData = "src/main/resources/songdata.csv";
 //    public static final String pathToSongData = "src/main/resources/song.txt";
-//    public static final String pathToSongData = "src/main/resources/big_songs.txt";
+    public static final String pathToSongData = "src/main/resources/big_songs.txt";
 
     public static List<String> parseArgumentLine(String line) {
         List<String> result = Lists.newArrayList();

@@ -34,9 +34,9 @@ public class StreamTestRunner {
     void runStreamTest() {
 //        runStreamReadTest();
 //        runWriteTest();
-        runVolatileTest();
+//        runVolatileTest();
 //        runDatabaseWrite();
-//        runDatabaseBatchWrite();
+        runDatabaseBatchWrite();
     }
 
     void runStreamReadTest() {

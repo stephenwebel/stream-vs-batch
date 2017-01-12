@@ -40,8 +40,8 @@ public class BatchTestRunner {
 
     void runTest() {
 //        runBatchReadTest();
-        runBatchReadFileWriteTest();
-//        runBatchReadDbWriteTest();
+//        runBatchReadFileWriteTest();
+        runBatchReadDbWriteTest();
     }
 
     void runBatchReadTest() {

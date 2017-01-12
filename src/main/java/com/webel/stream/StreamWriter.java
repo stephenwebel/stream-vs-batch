@@ -31,7 +31,7 @@ class StreamWriter implements AutoCloseable {
 
     StreamWriter(String pathToSongJson, NamedParameterJdbcTemplate namedTemplate) throws IOException {
         this.pathToSongJson = pathToSongJson;
-        writer = new FileWriter(pathToSongJson, true);
+        writer = new FileWriter(pathToSongJson, false);
         this.namedTemplate = namedTemplate;
     }
 
@@ -71,8 +71,7 @@ class StreamWriter implements AutoCloseable {
         parameterMap.put("lyrics", song.getLyrics());
         parameters.add(parameterMap);
         if (parameters.size() >= BATCH_SIZE) {
-            Map[] paramArr = new Map[parameters.size()];
-            namedTemplate.batchUpdate(INSERT_SONG, parameters.toArray(paramArr));
+            namedTemplate.batchUpdate(INSERT_SONG, parameters.toArray(new Map[parameters.size()]));
             parameters = Lists.newArrayListWithCapacity(BATCH_SIZE);
         }
 
@@ -80,8 +79,7 @@ class StreamWriter implements AutoCloseable {
 
     public void close() throws IOException {
         if (!parameters.isEmpty()) {
-            Map[] paramArr = new Map[parameters.size()];
-            namedTemplate.batchUpdate(INSERT_SONG, parameters.toArray(paramArr));
+            namedTemplate.batchUpdate(INSERT_SONG, parameters.toArray(new Map[parameters.size()]));
         }
         writer.close();
     }
