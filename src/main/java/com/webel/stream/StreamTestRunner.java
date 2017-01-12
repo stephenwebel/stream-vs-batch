@@ -12,6 +12,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.webel.common.SongArgumentParser.pathToSongData;
+
 /**
  * Created by swebel on 1/11/2017.
  */
@@ -19,9 +21,6 @@ import java.util.stream.Collectors;
 @SpringBootApplication
 @Configuration
 public class StreamTestRunner {
-    //    private static final String pathToSongData = "src/main/resources/songdata.csv";
-//    private static final String pathToSongData = "src/main/resources/song.txt";
-    private static final String pathToSongData = "src/main/resources/big_songs.txt";
     private static final String pathToSongJson = "src/main/resources/pureStreamWrite.json";
     private static final String pathToVolatileJson = "src/main/resources/volatileWrite.json";
     private static final StopWatch stopWatch = new StopWatch();
@@ -35,9 +34,9 @@ public class StreamTestRunner {
     void runStreamTest() {
 //        runStreamReadTest();
 //        runWriteTest();
-//        runVolatileTest();
+        runVolatileTest();
 //        runDatabaseWrite();
-        runDatabaseBatchWrite();
+//        runDatabaseBatchWrite();
     }
 
     void runStreamReadTest() {
@@ -54,16 +53,16 @@ public class StreamTestRunner {
     void runWriteTest() {
         log.info("Starting Stream Write Test");
         stopWatch.start("Stream Read -> Stream Write");
-        Collection<Song> songs = Lists.newArrayList();
+        long numSongs = 0L;
         try (StreamWriter streamWriter = new StreamWriter(pathToSongJson, namedTemplate)) {
-            songs = SongFileStreamer.stream(pathToSongData)
+            numSongs = SongFileStreamer.stream(pathToSongData)
                     .peek(streamWriter::writeSong)
-                    .collect(Collectors.toList());
+                    .count();
         } catch (IOException e) {
             log.error("", e);
         }
         stopWatch.stop();
-        log.info("Found {} songs", songs.size());
+        log.info("Found {} songs", numSongs);
         log.info(stopWatch.prettyPrint());
     }
 

@@ -19,13 +19,8 @@ import static com.webel.common.SongArgumentParser.parseArgumentLine;
 public class SongFileReader {
 
     private static final String LYRIC_BLOCK_TERMINATOR = "\"";
-    private final String pathToSongData;
 
-    public SongFileReader(String pathToSongData) {
-        this.pathToSongData = pathToSongData;
-    }
-
-    public List<Song> readSongsFromFile() {
+    static List<Song> readSongsFromFile(String pathToSongData) {
         List<Song> songs = Lists.newArrayList();
         try (BufferedReader songFileReader = new BufferedReader(new FileReader(pathToSongData))) {
             String currentLine = songFileReader.readLine();
