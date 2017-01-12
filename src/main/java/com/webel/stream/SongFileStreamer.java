@@ -19,7 +19,7 @@ class SongFileStreamer {
             BufferedReader songFileReader = new BufferedReader(new FileReader(pathToSongData));
             String currentLine = songFileReader.readLine();
             log.info("Headers for song data: {}", currentLine);
-            return StreamSupport.stream(new SongFileSpliterator(songFileReader), false);
+            return StreamSupport.stream(new SongFileSpliterator(songFileReader), false).limit(10000);
         } catch (IOException e) {
             log.error("Couldn't open song file from path: {}", pathToSongData, e);
         }

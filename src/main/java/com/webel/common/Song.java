@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 @Value
 @Builder
 @Slf4j
-public class Song {
+public class Song{
     String artistName;
     String title;
     String link;

@@ -2,6 +2,8 @@ package com.webel.stream;
 
 import com.webel.common.Song;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.util.StopWatch;
 
 import java.util.Collection;
@@ -13,18 +15,18 @@ import java.util.stream.Stream;
  */
 @Slf4j
 public class Main {
-    private static final String pathToSongData = "src/main/resources/songdata.csv";
-    private static final String pathToSongJson = "src/main/resources/songdata.json";
-    private static final StopWatch stopWatch = new StopWatch();
 
     public static void main(String[] args) {
-        log.info("Starting Stream Processing");
-        stopWatch.start("Stream File Read");
-        Stream<Song> songsFromFile = SongFileStreamer.stream(pathToSongData).peek(SongWriter::blockingWrite);
-        Stream<Song> songWrittenToFile = SongWriter.stream(songsFromFile, pathToSongJson);
-        Collection<Song> songs = songWrittenToFile.collect(Collectors.toList());
-        stopWatch.stop();
-        log.info("Found {} songs", songs.size());
-        log.info(stopWatch.prettyPrint());
+        DriverManagerDataSource dataSource = new DriverManagerDataSource();
+        //MySQL database we are using
+        dataSource.setDriverClassName("com.mysql.jdbc.Driver");
+        dataSource.setUrl("jdbc:mysql://localhost:3306/");//change url
+        dataSource.setUsername("java_owner");//change userid
+        dataSource.setPassword("java_pw");//change pwd
+
+        NamedParameterJdbcTemplate namedTemplate = new NamedParameterJdbcTemplate(dataSource);
+
+        StreamTestRunner streamTestRunner = new StreamTestRunner(namedTemplate);
+        streamTestRunner.runStreamTest();
     }
 }
