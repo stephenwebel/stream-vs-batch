@@ -13,14 +13,8 @@ import java.util.stream.StreamSupport;
  * Created by swebel on 1/10/2017.
  */
 @Slf4j
-public class SongFileStreamer {
-    private final String pathToSongData;
-
-    public SongFileStreamer(String pathToSongData) {
-        this.pathToSongData = pathToSongData;
-    }
-
-    public Stream<Song> stream() {
+class SongFileStreamer {
+    static Stream<Song> stream(String pathToSongData) {
         try {
             BufferedReader songFileReader = new BufferedReader(new FileReader(pathToSongData));
             String currentLine = songFileReader.readLine();

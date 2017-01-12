@@ -9,15 +9,20 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Created by swebel on 1/10/2017.
+ * Created by swebel on 1/11/2017.
  */
 @Slf4j
-public class Main {
-    private static final String pathToSongData = "src/main/resources/songdata.csv";
-    private static final String pathToSongJson = "src/main/resources/songdata.json";
+public class StreamTestRunner {
+    private final String pathToSongData;
+    private final String pathToSongJson;
     private static final StopWatch stopWatch = new StopWatch();
 
-    public static void main(String[] args) {
+    public StreamTestRunner(String pathToSongData, String pathToSongJson) {
+        this.pathToSongData = pathToSongData;
+        this.pathToSongJson = pathToSongJson;
+    }
+
+    public void runStreamTest(){
         log.info("Starting Stream Processing");
         stopWatch.start("Stream File Read");
         Stream<Song> songsFromFile = SongFileStreamer.stream(pathToSongData).peek(SongWriter::blockingWrite);
